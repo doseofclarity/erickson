@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Erikson's Psychosocial Theory | Pillitteri MCN Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        .recall-mode .reveal-text {
+            background-color: #cbd5e1 !important;
+            color: transparent !important;
+            text-shadow: none !important;
+            border-radius: 0.375rem;
+            padding: 0 0.3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: inset 0 0 0 1px #94a3b8;
+            user-select: none;
+        }
+        .recall-mode .reveal-text:hover {
+            background-color: #94a3b8 !important;
+        }
+        .recall-mode .reveal-text.revealed {
+            background-color: #fde047 !important;
+            color: #1e293b !important;
+            box-shadow: none;
+        }
+        .content-section { animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .locked-section { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        .quiz-feedback-correct { background-color: #dcfce7; border-left: 4px solid #22c55e; }
+        .quiz-feedback-wrong { background-color: #fee2e2; border-left: 4px solid #ef4444; }
+        .flip-card {
+            background-color: transparent;
+            height: 200px;
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 1rem;
+        }
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .flip-card-front {
+            background-color: #1e293b;
+            color: white;
+        }
+        .flip-card-back {
+            background-color: #be185d;
+            color: white;
+            transform: rotateY(180deg);
+        }
+        .stage-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stage-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        .erikson-table th {
+            background-color: #9d174d;
+            color: white;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #be185d 0%, #f43f5e 100%);
+            height: 6px;
+            border-radius: 3px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { erik: { light: '#fce7f3', DEFAULT: '#be185d', dark: '#831843' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col md:flex-row font-sans text-slate-800 overflow-hidden">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-erik-dark text-white p-4 flex justify-between items-center shadow-md z-30 shrink-0">
+        <button onclick="toggleMobileMenu()" class="text-white focus:outline-none z-40">
+            <i class="fa-solid fa-bars text-2xl"></i>
+        </button>
+        <h1 class="font-bold text-lg absolute left-1/2 transform -translate-x-1/2 pointer-events-none">
+            <i class="fa-solid fa-brain mr-2 text-erik-light"></i> Erikson
+        </h1>
+        <div class="w-8"></div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="hidden md:flex flex-col w-full md:w-80 bg-white shadow-2xl h-full absolute md:relative z-30 transition-transform duration-300 shrink-0 border-r border-slate-200">
+        <div class="p-6 bg-gradient-to-br from-erik-dark to-erik text-white hidden md:block shrink-0">
+            <h1 class="font-black text-2xl tracking-wide"><i class="fa-solid fa-brain text-erik-light mr-2"></i> Erikson's Stages</h1>
+            <p class="text-sm text-slate-300 mt-1 font-medium">Psychosocial Development | Pillitteri MCN</p>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 text-sm font-medium">
+                <li><button onclick="showSection('home')" id="btn-home" class="nav-btn w-full text-left px-6 py-3 bg-erik-light text-erik-dark border-r-4 border-erik-dark transition-colors"><i class="fa-solid fa-house w-6 nav-icon"></i><i class="fa-solid fa-lock w-6 hidden"></i> Home / Start</button></li>
+                <li><button onclick="showSection('intro')" id="btn-intro" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-chalkboard-user w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Overview & Key Concepts</button></li>
+                <li><button onclick="showSection('infancy')" id="btn-infancy" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-baby-carriage w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stage 1: Trust vs. Mistrust</button></li>
+                <li><button onclick="showSection('toddler')" id="btn-toddler" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-child w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stage 2: Autonomy vs. Shame/Doubt</button></li>
+                <li><button onclick="showSection('preschool')" id="btn-preschool" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-face-smile w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stage 3: Initiative vs. Guilt</button></li>
+                <li><button onclick="showSection('schoolage')" id="btn-schoolage" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-book-open w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stage 4: Industry vs. Inferiority</button></li>
+                <li><button onclick="showSection('adolescent')" id="btn-adolescent" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-people-arrows w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stage 5: Identity vs. Role Confusion</button></li>
+                <li><button onclick="showSection('adult')" id="btn-adult" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-heart w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Stages 6–8: Intimacy → Generativity → Integrity</button></li>
+                <li><button onclick="showSection('nursing')" id="btn-nursing" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-user-nurse w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Nursing Implications</button></li>
+                <li><button onclick="showSection('mnemonics')" id="btn-mnemonics" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors border-t border-slate-200 mt-2 locked-section"><i class="fa-solid fa-brain w-6 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Mnemonics & Review</button></li>
+                <li><button onclick="showSection('final_quiz_sec')" id="btn-final_quiz_sec" class="nav-btn w-full text-left px-6 py-3 text-slate-600 hover:bg-slate-50 transition-colors locked-section"><i class="fa-solid fa-graduation-cap w-6 text-amber-500 nav-icon hidden"></i><i class="fa-solid fa-lock w-6 text-slate-400"></i> Final 50‑Item Exam</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="flex-1 h-full overflow-y-auto bg-slate-100 relative w-full">
+        <div class="fixed top-16 md:top-4 right-4 md:right-8 z-40 flex items-center bg-white/90 backdrop-blur px-4 py-3 rounded-full shadow-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleRecallMode()">
+            <span class="mr-3 text-sm font-bold text-slate-700 hidden md:inline"><i class="fa-solid fa-brain text-erik mr-1"></i> Active Recall</span>
+            <span class="mr-3 text-sm font-bold text-slate-700 md:hidden"><i class="fa-solid fa-brain text-erik"></i></span>
+            <button id="recall-toggle" class="w-12 h-6 bg-slate-300 rounded-full relative transition-colors duration-300 focus:outline-none shadow-inner pointer-events-none">
+                <div id="recall-knob" class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform duration-300 shadow"></div>
+            </button>
+        </div>
+
+        <div class="p-4 md:p-8 max-w-6xl mx-auto pb-32">
+
+            <!-- HOME Section -->
+            <section id="home" class="content-section flex flex-col items-center justify-center min-h-[80vh] text-center block">
+                <div class="bg-gradient-to-br from-slate-800 to-erik-dark text-white rounded-3xl shadow-2xl p-10 md:p-16 w-full relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-10 -mr-10 text-white opacity-5 pointer-events-none"><i class="fa-solid fa-users text-[20rem]"></i></div>
+                    <div class="relative z-10">
+                        <div class="bg-white/10 backdrop-blur-sm inline-block p-4 rounded-full text-erik-light mb-6 shadow-sm border border-white/20">
+                            <i class="fa-solid fa-children text-5xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-300 mb-2 uppercase tracking-widest">Psychosocial Development</h3>
+                        <h1 class="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">Erik Erikson's<br>Eight Stages</h1>
+                        <div class="bg-white/10 backdrop-blur inline-block px-6 py-3 rounded-full mb-10 border border-white/20">
+                            <p class="text-lg text-white font-medium">"Personality develops in predetermined stages – each with a psychosocial crisis." – Pillitteri, MCN 14th Ed.</p>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
+                            <div class="stage-card bg-pink-500/20 p-3 rounded-2xl"><span class="font-black">Trust</span><br><span class="text-xs">Infant</span></div>
+                            <div class="stage-card bg-pink-500/20 p-3 rounded-2xl"><span class="font-black">Autonomy</span><br><span class="text-xs">Toddler</span></div>
+                            <div class="stage-card bg-pink-500/20 p-3 rounded-2xl"><span class="font-black">Initiative</span><br><span class="text-xs">Preschool</span></div>
+                            <div class="stage-card bg-pink-500/20 p-3 rounded-2xl"><span class="font-black">Industry</span><br><span class="text-xs">School-age</span></div>
+                        </div>
+                        <button onclick="unlockFirstSection()" class="mt-10 bg-erik hover:bg-erik-dark text-white font-black py-4 px-10 rounded-full shadow-xl transition-transform hover:scale-105 text-lg flex items-center mx-auto">
+                            Begin Lecture <i class="fa-solid fa-arrow-right ml-3"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Overview & Key Concepts -->
+            <section id="intro" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                    <h2 class="text-3xl font-black text-slate-800 mb-4 border-b-2 border-erik pb-3"><i class="fa-solid fa-book-open text-erik mr-4"></i> Erikson's Core Concepts</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-pink-50 p-5 rounded-xl">
+                            <p><span class="font-bold">Epigenetic principle:</span> Development unfolds in <span class="reveal-text">predetermined stages</span>.</p>
+                            <p class="mt-3"><span class="font-bold">Psychosocial crisis:</span> Each stage presents a conflict between <span class="reveal-text">two opposing forces</span>.</p>
+                            <p><span class="font-bold">Virtue:</span> Successful resolution yields a <span class="reveal-text">basic strength</span>.</p>
+                        </div>
+                        <div>
+                            <canvas id="eriksonChart" width="400" height="250" class="w-full h-auto bg-slate-50 p-2 rounded-xl shadow-inner"></canvas>
+                            <p class="text-xs text-center mt-2">Age ranges for the first 5 stages (childhood & adolescence)</p>
+                        </div>
+                    </div>
+                    <div class="flip-card mt-6 w-full max-w-sm mx-auto">
+                        <div class="flip-card-inner"><div class="flip-card-front"><i class="fa-regular fa-lightbulb text-3xl mb-2"></i>What is the central theme of Erikson's theory?</div><div class="flip-card-back">Social relationships shape personality; each stage involves a psychosocial crisis that builds ego strength.</div></div>
+                    </div>
+                    <button onclick="openQuiz('intro')" class="mt-8 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Take Quiz → Unlock Stage 1</button>
+                </div>
+            </section>
+
+            <!-- Stage 1: Trust vs Mistrust -->
+            <section id="infancy" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-3"><div class="bg-erik w-10 h-10 rounded-full flex items-center justify-center text-white font-black">1</div><h2 class="text-2xl font-black">Trust vs. Mistrust (<span class="reveal-text">Birth–18 months</span>)</h2></div>
+                    <div class="grid md:grid-cols-2 gap-5 mt-4">
+                        <div><p><span class="font-bold">Virtue:</span> <span class="reveal-text">Hope</span></p><p>Infant develops trust when needs are <span class="reveal-text">consistently met</span>. Mistrust leads to fear and insecurity.</p><p class="mt-3 font-bold text-erik">Nursing: Encourage <span class="reveal-text">rooming‑in</span>, responsive caregiving, skin‑to‑skin contact.</p></div>
+                        <div class="bg-pink-50 p-4 rounded-xl"><div class="flip-card h-40"><div class="flip-card-inner"><div class="flip-card-front">Positive outcome example</div><div class="flip-card-back">Baby cries, caregiver feeds → infant learns the world is predictable and safe.</div></div></div></div>
+                    </div>
+                    <button onclick="openQuiz('infancy')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Stage 2</button>
+                </div>
+            </section>
+
+            <!-- Stage 2: Autonomy vs Shame -->
+            <section id="toddler" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-3"><div class="bg-erik w-10 h-10 rounded-full flex items-center justify-center text-white font-black">2</div><h2 class="text-2xl font-black">Autonomy vs. Shame/Doubt (<span class="reveal-text">1–3 years</span>)</h2></div>
+                    <div class="grid md:grid-cols-2 gap-5 mt-4"><div><p><span class="font-bold">Virtue:</span> <span class="reveal-text">Will</span></p><p>Toddler learns to exercise will, <span class="reveal-text">make choices</span>. Overcontrol leads to shame and self‑doubt.</p><p class="font-bold mt-2 text-erik">Nursing: Offer <span class="reveal-text">limited choices</span>, praise efforts, allow self‑feeding.</p></div><div class="bg-pink-50 p-3 rounded-lg"><i class="fa-regular fa-comment"></i> "Me do it!" – encourage safe independence.</div></div>
+                    <button onclick="openQuiz('toddler')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Stage 3</button>
+                </div>
+            </section>
+
+            <!-- Stage 3: Initiative vs Guilt -->
+            <section id="preschool" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">3. Initiative vs. Guilt (<span class="reveal-text">3–6 years</span>)</h2>
+                    <p><span class="font-bold">Virtue:</span> <span class="reveal-text">Purpose</span>. Preschoolers initiate activities, ask questions. If criticized → guilt.</p>
+                    <p class="mt-2"><span class="font-bold text-erik">Nursing:</span> Encourage <span class="reveal-text">imaginative play</span>, answer "why" questions, avoid harsh punishment for curiosity.</p>
+                    <div class="progress-bar w-full my-4"></div>
+                    <button onclick="openQuiz('preschool')" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Stage 4</button>
+                </div>
+            </section>
+
+            <!-- Stage 4: Industry vs Inferiority -->
+            <section id="schoolage" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">4. Industry vs. Inferiority (<span class="reveal-text">6–12 years</span>)</h2>
+                    <p><span class="font-bold">Virtue:</span> <span class="reveal-text">Competence</span>. Child learns to be productive, gains pride in <span class="reveal-text">accomplishments</span>. Failure → feelings of inferiority.</p>
+                    <p><span class="font-bold text-erik">Nursing:</span> Praise school achievements, support skill development (<span class="reveal-text">hobbies</span>, crafts), encourage teamwork.</p>
+                    <button onclick="openQuiz('schoolage')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Stage 5</button>
+                </div>
+            </section>
+
+            <!-- Stage 5: Identity vs Role Confusion -->
+            <section id="adolescent" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">5. Identity vs. Role Confusion (<span class="reveal-text">12–18 years</span>)</h2>
+                    <p><span class="font-bold">Virtue:</span> <span class="reveal-text">Fidelity</span>. Adolescents explore roles, develop a <span class="reveal-text">sense of self</span>. Role confusion leads to identity crisis.</p>
+                    <p><span class="font-bold text-erik">Nursing:</span> Provide <span class="reveal-text">privacy</span>, support exploration of values, offer nonjudgmental guidance, discuss future goals.</p>
+                    <button onclick="openQuiz('adolescent')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Stages 6–8</button>
+                </div>
+            </section>
+
+            <!-- Stages 6-8 (Adult) -->
+            <section id="adult" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">Stages 6–8: Young Adult to Late Adult</h2>
+                    <table class="w-full text-sm border mt-4 erikson-table">
+                        <thead><tr><th class="p-2">Stage</th><th>Age</th><th>Crisis</th><th>Virtue</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b"><td class="p-2 font-bold">6</td><td>18–35</td><td>Intimacy vs. Isolation</td><td><span class="reveal-text">Love</span></td></tr>
+                            <tr class="border-b"><td class="p-2 font-bold">7</td><td>35–65</td><td>Generativity vs. Stagnation</td><td><span class="reveal-text">Care</span></td></tr>
+                            <tr><td class="p-2 font-bold">8</td><td>65+</td><td>Integrity vs. Despair</td><td><span class="reveal-text">Wisdom</span></td></tr>
+                        </tbody>
+                    </table>
+                    <p class="mt-3 text-sm">Nursing: Support meaningful relationships, volunteer activities, life review for older adults.</p>
+                    <button onclick="openQuiz('adult')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Nursing Implications</button>
+                </div>
+            </section>
+
+            <!-- Nursing Implications -->
+            <section id="nursing" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">Nursing Implications Across Stages</h2>
+                    <ul class="list-disc pl-5 mt-3 space-y-2">
+                        <li>Trust vs mistrust – consistent caregivers, minimize separation.</li>
+                        <li>Autonomy – offer choices (e.g., “apple or orange juice?”).</li>
+                        <li>Initiative – encourage role play, answer questions truthfully.</li>
+                        <li>Industry – reward accomplishments, provide age‑appropriate responsibilities.</li>
+                        <li>Identity – respect confidentiality, support exploration without judgment.</li>
+                        <li>Intimacy – teach healthy relationships, communication skills.</li>
+                        <li>Generativity – encourage mentoring, parenting classes.</li>
+                        <li>Integrity – life review, reminiscence therapy.</li>
+                    </ul>
+                    <button onclick="openQuiz('nursing')" class="mt-6 w-full bg-slate-800 text-white font-black py-4 rounded-xl">Quiz → Unlock Mnemonics</button>
+                </div>
+            </section>
+
+            <!-- Mnemonics & Review -->
+            <section id="mnemonics" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-black">Mnemonics & Quick Review</h2>
+                    <div class="grid md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-pink-100 p-4 rounded-xl"><span class="font-black">Stages mnemonic:</span> "Trust Autonomy, Initiative, Industry, Identity, Intimacy, Generativity, Integrity"</div>
+                        <div class="bg-pink-100 p-4 rounded-xl"><span class="font-black">Virtues:</span> Hope, Will, Purpose, Competence, Fidelity, Love, Care, Wisdom.</div>
+                        <div class="bg-pink-100 p-4 rounded-xl"><span class="font-black">Basic strength for infancy:</span> Hope (Trust)</div>
+                        <div class="bg-pink-100 p-4 rounded-xl"><span class="font-black">School‑age crisis:</span> Industry vs Inferiority → virtue Competence.</div>
+                    </div>
+                    <button onclick="openQuiz('final_quiz')" class="mt-6 w-full bg-amber-500 text-slate-900 font-black py-4 rounded-xl text-lg">🏆 Take Final 50‑Item Exam</button>
+                </div>
+            </section>
+
+            <!-- Final exam placeholder -->
+            <section id="final_quiz_sec" class="content-section hidden text-center p-12"><i class="fa-solid fa-graduation-cap text-6xl text-amber-400"></i><h2 class="text-3xl font-black mt-4">Final Comprehensive Exam</h2><button onclick="openQuiz('final_quiz')" class="mt-6 bg-slate-800 text-white px-10 py-4 rounded-full text-xl">Start 50‑Item Exam</button></section>
+        </div>
+    </main>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 overflow-auto">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeQuiz()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <h2 id="quiz-title" class="text-2xl font-black mb-4"></h2>
+            <div id="quiz-questions-container" class="space-y-4"></div>
+            <button id="quiz-submit-btn" onclick="submitQuiz()" class="w-full bg-erik text-white py-3 rounded-xl mt-4 font-bold">Submit Answers</button>
+            <div id="quiz-result-container" class="hidden mt-4 p-4 bg-slate-100 rounded-xl"></div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------- QUIZ DATA (10 questions each section) --------------------
+        const quizzes = {
+            intro: { title: "Erikson: Key Concepts", next: "infancy", questions: [
+                {q: "Erikson's theory emphasizes:", options: ["Psychosexual stages", "Psychosocial crises across lifespan", "Cognitive development", "Moral reasoning"], ans:1},
+                {q: "The epigenetic principle means:", options: ["Stages are predetermined and sequential", "Environment determines everything", "Stages can be skipped", "Only childhood matters"], ans:0},
+                {q: "Successful resolution of a crisis yields:", options: ["A virtue/strength", "Fixation", "Regression", "Inferiority"], ans:0},
+                {q: "How many stages did Erikson describe?", options: ["4", "5", "8", "12"], ans:2},
+                {q: "Erikson's theory is unique because it extends:", options: ["Only to adolescence", "Throughout the entire lifespan", "Only to adulthood", "To old age only"], ans:1},
+                {q: "What is the basic virtue of infancy?", options: ["Will", "Hope", "Purpose", "Competence"], ans:1},
+                {q: "A child who develops a sense of mistrust likely had:", options: ["Consistent care", "Inconsistent or rejecting care", "Overprotective parents", "High intelligence"], ans:1},
+                {q: "Erikson believed personality is shaped by:", options: ["Biology only", "Social and cultural forces", "Unconscious drives", "Learning theory"], ans:1},
+                {q: "The central conflict of the toddler stage is:", options: ["Trust vs mistrust", "Autonomy vs shame/doubt", "Initiative vs guilt", "Industry vs inferiority"], ans:1},
+                {q: "A positive outcome of the school‑age stage (industry) is:", options: ["Competence", "Hope", "Will", "Fidelity"], ans:0}
+            ] },
+            infancy: { title: "Stage 1: Trust vs Mistrust", next: "toddler", questions: [
+                {q: "What is the age range for Trust vs Mistrust?", options: ["Birth–18 months", "1–3 years", "3–6 years", "6–12 years"], ans:0},
+                {q: "Basic strength of this stage:", options: ["Will", "Hope", "Purpose", "Love"], ans:1},
+                {q: "Mistrust develops when:", options: ["Needs are met consistently", "Care is inconsistent or neglectful", "Child is overprotected", "Parents are too strict"], ans:1},
+                {q: "Which nursing action promotes trust?", options: ["Frequent changes of caregivers", "Unpredictable feeding schedule", "Responsive caregiving and holding", "Punishing the infant"], ans:2},
+                {q: "A 6‑month old who cries when a stranger enters is showing:", options: ["Mistrust", "Secure attachment", "Object permanence", "Egocentrism"], ans:0},
+                {q: "The virtue of trust is:", options: ["Fidelity", "Hope", "Care", "Wisdom"], ans:1},
+                {q: "Failure to resolve trust vs mistrust may lead to:", options: ["Depression, withdrawal, suspiciousness", "Shame", "Guilt", "Inferiority"], ans:0},
+                {q: "Which activity supports trust in a hospitalized infant?", options: ["Encourage parents to room‑in", "Keep infant in central nursery", "Avoid touching", "Switch nurses daily"], ans:0},
+                {q: "Trust development is most influenced by:", options: ["Nutrition only", "Consistency of loving care", "Motor milestones", "Toys"], ans:1},
+                {q: "An infant who shows anxiety when separated from parent is:", options: ["Experiencing normal trust‑based attachment", "Pathologically mistrustful", "Delayed", "Autistic"], ans:0}
+            ] },
+            toddler: { title: "Stage 2: Autonomy vs Shame/Doubt", next: "preschool", questions: [
+                {q: "Autonomy vs Shame/Doubt occurs at age:", options: ["0–1 yr", "1–3 yr", "3–6 yr", "6–12 yr"], ans:1},
+                {q: "Virtue achieved:", options: ["Will", "Hope", "Purpose", "Competence"], ans:0},
+                {q: "A toddler who says 'No' repeatedly is:", options: ["Developing autonomy", "Being defiant", "Stuck in trust stage", "Experiencing shame"], ans:0},
+                {q: "Overly restrictive parenting leads to:", options: ["Independence", "Shame and self‑doubt", "Initiative", "Industry"], ans:1},
+                {q: "Nursing intervention to promote autonomy:", options: ["Make all decisions for the child", "Offer limited choices (e.g., which cup)", "Force child to obey", "Ignore child's attempts"], ans:1},
+                {q: "A 2‑year‑old trying to feed himself but spilling is:", options: ["Developing will", "Showing inferiority", "Regressing", "Being manipulative"], ans:0},
+                {q: "Shame results from:", options: ["Overprotection", "Too much freedom", "Being criticized or controlled excessively", "Praise"], ans:2},
+                {q: "Which statement reflects autonomy?", options: ["Me do it!", "Mommy help", "No, I can't", "I'm bad"], ans:0},
+                {q: "Toilet training is a major task during:", options: ["Trust vs mistrust", "Autonomy vs shame", "Initiative vs guilt", "Industry vs inferiority"], ans:1},
+                {q: "The virtue 'will' refers to:", options: ["Stubbornness", "The ability to exercise free choice and self‑control", "Aggression", "Submission"], ans:1}
+            ] },
+            preschool: { title: "Stage 3: Initiative vs Guilt", next: "schoolage", questions: [
+                {q: "Age for Initiative vs Guilt:", options: ["1–3", "3–6", "6–12", "12–18"], ans:1},
+                {q: "Virtue:", options: ["Will", "Hope", "Purpose", "Fidelity"], ans:2},
+                {q: "A child who invents pretend play is expressing:", options: ["Initiative", "Guilt", "Inferiority", "Mistrust"], ans:0},
+                {q: "Harsh punishment for a preschooler's curiosity may cause:", options: ["Initiative", "Guilt", "Autonomy", "Identity"], ans:1},
+                {q: "Nursing approach for a 4‑year‑old:", options: ["Ignore questions", "Answer simply and allow pretend play", "Use medical jargon", "Punish for asking"], ans:1},
+                {q: "Which statement indicates guilt?", options: ["I'm sorry I tried to help", "Let me try!", "I can do it", "Look at my drawing"], ans:0},
+                {q: "Encouraging a preschooler to dress themselves supports:", options: ["Initiative", "Guilt", "Inferiority", "Stagnation"], ans:0},
+                {q: "Magical thinking is common in this stage and may cause:", options: ["Fears about illness being punishment", "Logical reasoning", "Conservation", "Object permanence"], ans:0},
+                {q: "A 5‑year‑old wants to 'cook like mom' – the best response is:", options: ["Don't touch the stove", "Let's pretend cook with safe utensils", "You're too young", "Ignore"], ans:1},
+                {q: "Failure to resolve initiative leads to:", options: ["Guilt and fear of trying new things", "Shame", "Mistrust", "Role confusion"], ans:0}
+            ] },
+            schoolage: { title: "Stage 4: Industry vs Inferiority", next: "adolescent", questions: [
+                {q: "Age range Industry vs Inferiority:", options: ["3–6", "6–12", "12–18", "18–35"], ans:1},
+                {q: "Virtue:", options: ["Competence", "Fidelity", "Care", "Wisdom"], ans:0},
+                {q: "A child who completes a school project and feels proud is experiencing:", options: ["Industry", "Inferiority", "Guilt", "Shame"], ans:0},
+                {q: "Lack of recognition for effort may lead to:", options: ["Industry", "Inferiority", "Initiative", "Identity"], ans:1},
+                {q: "Nursing action to foster industry:", options: ["Give simple tasks and praise", "Criticize mistakes", "Do everything for child", "Avoid responsibilities"], ans:0},
+                {q: "School‑age children compare themselves to peers. This is:", options: ["Normal development of industry", "A sign of inferiority", "Regression", "Egocentrism"], ans:0},
+                {q: "A child who gives up easily on new tasks may be:", options: ["Feeling inferior", "Trusting", "Autonomous", "Initiating"], ans:0},
+                {q: "Which activity supports industry?", options: ["Collecting baseball cards", "Watching TV all day", "Being told they are stupid", "No challenges"], ans:0},
+                {q: "The virtue of competence means:", options: ["Able to do things well", "Feeling hopeless", "Doubt", "Guilt"], ans:0},
+                {q: "Teacher's praise is crucial during this stage because:", options: ["Industry is fostered through accomplishment recognition", "Identity is formed", "Autonomy is gained", "Trust is built"], ans:0}
+            ] },
+            adolescent: { title: "Stage 5: Identity vs Role Confusion", next: "adult", questions: [
+                {q: "Identity vs Role Confusion occurs during:", options: ["6–12", "12–18", "18–35", "35–65"], ans:1},
+                {q: "Virtue:", options: ["Fidelity", "Love", "Care", "Wisdom"], ans:0},
+                {q: "Role confusion may lead to:", options: ["Clear sense of self", "Identity crisis or delinquency", "Initiative", "Trust"], ans:1},
+                {q: "Adolescents experiment with different roles. This is:", options: ["Abnormal", "Part of identity formation", "Only seen in troubled teens", "Regression"], ans:1},
+                {q: "Nursing approach for an adolescent:", options: ["Direct them to make all decisions", "Respect privacy, allow exploration", "Compare them to siblings", "Ignore their concerns"], ans:1},
+                {q: "Fidelity means:", options: ["Loyalty and sense of belonging", "Self‑doubt", "Inferiority", "Competence"], ans:0},
+                {q: "Which behavior indicates identity confusion?", options: ["Choosing a career path", "Joining a cult or dropping out of school", "Having friends", "Asking questions"], ans:1},
+                {q: "The main psychosocial task of adolescence is to:", options: ["Learn to read", "Develop trust", "Form a sense of personal identity", "Achieve intimacy"], ans:2},
+                {q: "Peer groups are important because they provide:", options: ["Feedback for identity formation", "Isolation", "Shame", "Mistrust"], ans:0},
+                {q: "A teenager who knows 'who they are' has achieved:", options: ["Identity", "Role confusion", "Inferiority", "Guilt"], ans:0}
+            ] },
+            adult: { title: "Stages 6–8: Intimacy, Generativity, Integrity", next: "nursing", questions: [
+                {q: "Intimacy vs Isolation virtue:", options: ["Love", "Care", "Wisdom", "Fidelity"], ans:0},
+                {q: "Generativity vs Stagnation occurs during:", options: ["18–35", "35–65", "65+", "12–18"], ans:1},
+                {q: "Integrity vs Despair virtue:", options: ["Wisdom", "Love", "Care", "Hope"], ans:0},
+                {q: "A middle‑aged adult who volunteers as a mentor shows:", options: ["Generativity", "Stagnation", "Isolation", "Despair"], ans:0},
+                {q: "Elderly person who reflects with satisfaction on life has achieved:", options: ["Integrity", "Despair", "Stagnation", "Role confusion"], ans:0},
+                {q: "Failure to achieve intimacy leads to:", options: ["Isolation and loneliness", "Generativity", "Integrity", "Identity"], ans:0},
+                {q: "Stagnation refers to:", options: ["Productivity", "Self‑absorption and lack of growth", "Life review", "Intimacy"], ans:1},
+                {q: "Which nursing action supports generativity?", options: ["Encourage older adults to share skills", "Isolate them", "Avoid challenges", "Focus only on physical health"], ans:0},
+                {q: "The virtue of late adulthood is:", options: ["Wisdom", "Love", "Care", "Hope"], ans:0},
+                {q: "A person who regrets missed opportunities is experiencing:", options: ["Despair", "Integrity", "Generativity", "Intimacy"], ans:0}
+            ] },
+            nursing: { title: "Nursing Implications", next: "mnemonics", questions: [
+                {q: "For a hospitalized infant, the nurse should prioritize:", options: ["Parental presence and consistent care", "Strict routines", "Many different caregivers", "Minimize contact"], ans:0},
+                {q: "To support autonomy in a toddler, the nurse should:", options: ["Offer choices like 'pink or blue bandage'", "Restrain the child", "Ignore refusal", "Force feed"], ans:0},
+                {q: "A preschooler fears a procedure. Best approach:", options: ["Use simple explanation and therapeutic play", "Tell nothing", "Show graphic pictures", "Force procedure quickly"], ans:0},
+                {q: "To promote industry in a school‑age child:", options: ["Allow them to perform self‑care tasks and praise", "Do everything for them", "Criticize mistakes", "Ignore them"], ans:0},
+                {q: "An adolescent needs guidance about identity. Nurse should:", options: ["Respect confidentiality, discuss values", "Lecture about morals", "Involve parents in all conversations", "Force a career choice"], ans:0},
+                {q: "Which intervention supports generativity?", options: ["Encourage parenting classes or mentoring", "Promote isolation", "Focus only on finances", "Ignore hobbies"], ans:0},
+                {q: "For an older adult, life review helps achieve:", options: ["Integrity", "Despair", "Stagnation", "Role confusion"], ans:0},
+                {q: "Nurse can reduce mistrust in hospitalized infant by:", options: ["Keeping same nurse, encourage bonding", "Switching caregivers frequently", "Avoiding eye contact", "Leaving infant alone"], ans:0},
+                {q: "When a toddler says 'no' to medication, the nurse should:", options: ["Offer limited choices (e.g., cup or syringe)", "Force it", "Withhold treatment", "Ignore the child"], ans:0},
+                {q: "School‑age children benefit from:", options: ["Explaining reasons and allowing participation", "No explanation", "Threats", "Only parental commands"], ans:0}
+            ] }
+        };
+
+        // Build final 50 items
+        let finalSet = [];
+        for (let s of ['intro', 'infancy', 'toddler', 'preschool', 'schoolage']) {
+            finalSet = finalSet.concat(quizzes[s].questions.slice(0, 10));
+        }
+        while (finalSet.length < 50) {
+            finalSet.push({ q: "Which virtue is associated with generativity?", options: ["Love", "Care", "Wisdom", "Fidelity"], ans: 1 });
+        }
+        quizzes['final_quiz'] = { title: "Final 50-Item Exam: Erikson's Stages", next: null, questions: finalSet };
+
+        // Global State & Functions
+        let unlockedSections = ['home'];
+        let currentQuiz = null;
+
+        window.unlockFirstSection = function() {
+            if (!unlockedSections.includes('intro')) {
+                unlockedSections.push('intro');
+                window.updateSidebarUI();
+            }
+            window.showSection('intro');
+        };
+
+        window.showSection = function(s) {
+            if (!unlockedSections.includes(s) && s !== 'home') {
+                alert("Complete the current section's quiz (≥75% correct) to unlock next stage.");
+                return;
+            }
+            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(s);
+            if (target) target.classList.remove('hidden');
+            
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+            }
+            document.querySelector('main').scrollTop = 0;
+        };
+
+        window.updateSidebarUI = function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                let sec = btn.id.replace('btn-', '');
+                let locked = !unlockedSections.includes(sec) && sec !== 'home';
+                if (locked) {
+                    btn.classList.add('locked-section');
+                    if (btn.querySelector('.fa-lock')) btn.querySelector('.fa-lock').classList.remove('hidden');
+                    if (btn.querySelector('.nav-icon')) btn.querySelector('.nav-icon').classList.add('hidden');
+                } else {
+                    btn.classList.remove('locked-section');
+                    if (btn.querySelector('.fa-lock')) btn.querySelector('.fa-lock').classList.add('hidden');
+                    if (btn.querySelector('.nav-icon')) btn.querySelector('.nav-icon').classList.remove('hidden');
+                }
+            });
+        };
+
+        window.openQuiz = function(sec) {
+            currentQuiz = sec;
+            let qd = quizzes[sec];
+            document.getElementById('quiz-title').innerText = qd.title;
+            let container = document.getElementById('quiz-questions-container');
+            container.innerHTML = '';
+            qd.questions.forEach((q, idx) => {
+                let html = `<div class="border p-3 rounded mb-3"><p class="font-bold">${idx + 1}. ${q.q}</p>`;
+                q.options.forEach((opt, oi) => {
+                    html += `<label class="block p-2 hover:bg-slate-50 cursor-pointer rounded transition-colors"><input type="radio" name="q${idx}" value="${oi}" class="mr-2 accent-erik"> ${opt}</label>`;
+                });
+                html += `<div class="feedback-${idx} text-sm mt-1 font-medium"></div></div>`;
+                container.innerHTML += html;
+            });
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            document.getElementById('quiz-submit-btn').classList.remove('hidden');
+            document.getElementById('quiz-result-container').classList.add('hidden');
+        };
+
+        window.closeQuiz = function() {
+            document.getElementById('quiz-modal').classList.add('hidden');
+        };
+
+        window.submitQuiz = function() {
+            let qd = quizzes[currentQuiz];
+            let score = 0;
+            for (let i = 0; i < qd.questions.length; i++) {
+                let sel = document.querySelector(`input[name="q${i}"]:checked`);
+                let correct = sel && parseInt(sel.value) === qd.questions[i].ans;
+                if (correct) score++;
+                let fb = document.querySelector(`.feedback-${i}`);
+                if (fb) {
+                    let ansText = qd.questions[i].options[qd.questions[i].ans];
+                    fb.innerHTML = correct ? 
+                        `<span class="text-green-600"><i class="fa-solid fa-check-circle mr-1"></i> Correct</span>` : 
+                        `<span class="text-red-600"><i class="fa-solid fa-xmark-circle mr-1"></i> Wrong. Correct: ${ansText}</span>`;
+                }
+            }
+            
+            let pct = (score / qd.questions.length) * 100;
+            let resDiv = document.getElementById('quiz-result-container');
+            document.getElementById('quiz-submit-btn').classList.add('hidden');
+            resDiv.classList.remove('hidden');
+            
+            if (pct >= 75) {
+                if (currentQuiz === 'final_quiz') {
+                    resDiv.innerHTML = `<div class="text-green-700 text-center font-bold text-xl mb-4">🎉 Score ${score}/${qd.questions.length} (${pct}%) – Erikson Mastery Achieved!</div><button onclick="closeQuiz()" class="mt-2 bg-slate-800 hover:bg-slate-900 transition-colors text-white p-3 rounded-xl w-full font-bold">Close</button>`;
+                    return;
+                }
+                if (qd.next && !unlockedSections.includes(qd.next)) {
+                    unlockedSections.push(qd.next);
+                    if (qd.next === 'mnemonics') unlockedSections.push('final_quiz_sec');
+                    window.updateSidebarUI();
+                }
+                resDiv.innerHTML = `<div class="text-green-700 font-bold mb-3 text-lg"><i class="fa-solid fa-check-circle mr-1"></i> Passed! ${score}/${qd.questions.length} (${pct}%)</div><button onclick="closeQuiz(); window.showSection('${qd.next}')" class="mt-2 bg-green-600 hover:bg-green-700 transition-colors text-white p-3 rounded-xl w-full font-bold">Unlock ${qd.next.replace(/([A-Z])/g, ' $1')}</button>`;
+            } else {
+                resDiv.innerHTML = `<div class="text-red-600 font-bold mb-3 text-lg"><i class="fa-solid fa-xmark-circle mr-1"></i> Failed (${pct}%). Need 75%.</div><button onclick="openQuiz('${currentQuiz}')" class="mt-2 bg-slate-600 hover:bg-slate-700 transition-colors text-white p-3 rounded-xl w-full font-bold">Try Again</button>`;
+            }
+        };
+
+        window.toggleRecallMode = function() {
+            let active = !document.body.classList.contains('recall-mode');
+            let toggle = document.getElementById('recall-toggle');
+            let knob = document.getElementById('recall-knob');
+            
+            if (active) {
+                document.body.classList.add('recall-mode');
+                toggle.classList.add('bg-erik-dark');
+                knob.classList.add('translate-x-6');
+            } else {
+                document.body.classList.remove('recall-mode');
+                toggle.classList.remove('bg-erik-dark');
+                knob.classList.remove('translate-x-6');
+            }
+        };
+
+        window.toggleMobileMenu = function() {
+            let s = document.getElementById('sidebar');
+            s.classList.toggle('hidden');
+        };
+
+        // Initialization
+        window.addEventListener('load', () => {
+            new Chart(document.getElementById('eriksonChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Trust', 'Autonomy', 'Initiative', 'Industry', 'Identity'],
+                    datasets: [{
+                        label: 'Age Range',
+                        data: [[0, 1.5], [1.5, 3], [3, 6], [6, 12], [12, 18]],
+                        backgroundColor: '#be185d',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Age (years)' },
+                            min: 0,
+                            max: 20
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Age: ' + context.raw[0] + ' to ' + context.raw[1] + ' years';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            window.updateSidebarUI();
+            
+            document.querySelectorAll('.reveal-text').forEach(el => {
+                el.addEventListener('click', function() {
+                    if (document.body.classList.contains('recall-mode')) {
+                        this.classList.toggle('revealed');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
